@@ -104,7 +104,14 @@ private func findContextGitPaths(_ cwd: String) -> ContextGitPaths? {
             if let commonDirText = try? String(contentsOf: commonDirFile, encoding: .utf8)
                 .trimmingCharacters(in: .whitespacesAndNewlines),
                 !commonDirText.isEmpty {
-                commonGitDir = URL(fileURLWithPath: commonDirText, relativeTo: URL(fileURLWithPath: gitDir, isDirectory: true))
+                // `commondir` is relative to the worktree's own gitdir ("../.."
+                // for a linked worktree). `URL(fileURLWithPath:relativeTo:)`
+                // silently drops such a relative path and returns the base
+                // unchanged, which leaves `commonGitDir` pointing at the worktree
+                // gitdir, sends `mainRepoRoot` into `.git/worktrees`, and makes
+                // the shadow check fail. Resolve it as a path component instead.
+                commonGitDir = URL(fileURLWithPath: gitDir)
+                    .appendingPathComponent(commonDirText)
                     .standardized.path
             } else {
                 commonGitDir = gitDir
