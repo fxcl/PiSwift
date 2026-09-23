@@ -112,8 +112,7 @@ private func findContextGitPaths(_ cwd: String) -> ContextGitPaths? {
             return ContextGitPaths(repoDir: dir, commonGitDir: commonGitDir)
         }
 
-        let parent = URL(fileURLWithPath: dir).deletingLastPathComponent().path
-        if parent == dir { return nil }
+        guard let parent = parentDirectoryPath(of: dir) else { return nil }
         dir = parent
     }
 }

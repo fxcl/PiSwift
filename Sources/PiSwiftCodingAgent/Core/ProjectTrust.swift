@@ -194,8 +194,7 @@ public func hasTrustRequiringProjectResources(_ cwd: String) -> Bool {
             return true
         }
 
-        let parentDir = URL(fileURLWithPath: currentDir).deletingLastPathComponent().path
-        if parentDir == currentDir {
+        guard let parentDir = parentDirectoryPath(of: currentDir) else {
             return false
         }
         currentDir = parentDir

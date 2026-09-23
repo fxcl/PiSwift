@@ -1826,10 +1826,7 @@ private func findGitRepoRoot(startDir: String) -> String? {
         if FileManager.default.fileExists(atPath: URL(fileURLWithPath: dir).appendingPathComponent(".git").path) {
             return dir
         }
-        let parent = URL(fileURLWithPath: dir).deletingLastPathComponent().path
-        if parent == dir {
-            return nil
-        }
+        guard let parent = parentDirectoryPath(of: dir) else { return nil }
         dir = parent
     }
 }
@@ -1843,10 +1840,7 @@ private func collectAncestorAgentsSkillDirs(startDir: String) -> [String] {
         if let gitRoot, dir == gitRoot {
             break
         }
-        let parent = URL(fileURLWithPath: dir).deletingLastPathComponent().path
-        if parent == dir {
-            break
-        }
+        guard let parent = parentDirectoryPath(of: dir) else { break }
         dir = parent
     }
     return result
