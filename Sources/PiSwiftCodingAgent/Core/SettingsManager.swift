@@ -555,6 +555,16 @@ public final class SettingsManager: Sendable {
         save()
     }
 
+    /// Persists the skills block of settings.json (the machine-skills toggle
+    /// and per-source switches). GUI hosts toggle the state here — the value
+    /// in settings.json is the single source of truth, so the toggle survives
+    /// relaunches exactly like the CLI's `/skills` command.
+    public func setSkillsSettings(_ skills: SkillsSettings) {
+        globalSettings.skills = skills
+        markModified("skills")
+        save()
+    }
+
     public func setDefaultModelAndProvider(_ provider: String, _ model: String) {
         globalSettings.defaultProvider = provider
         globalSettings.defaultModel = model

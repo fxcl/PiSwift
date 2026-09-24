@@ -1763,10 +1763,13 @@ public final class AgentSession: Sendable {
         return agent.dropTrailingErroredAssistant()
     }
 
-    public func steer(_ text: String) {
+    /// Steers may carry attachments (omp-gui's Steer button sends the
+    /// composer's images along with the text); defaults keep the plain-text
+    /// call sites unchanged.
+    public func steer(_ text: String, images: [ImageContent]? = nil) {
         let expandedText = expandPromptText(text)
         steeringMessages.append(expandedText)
-        agent.steer(buildUserMessage(text: expandedText, images: nil))
+        agent.steer(buildUserMessage(text: expandedText, images: images))
     }
 
     public func followUp(_ text: String) {

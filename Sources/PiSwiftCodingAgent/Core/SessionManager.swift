@@ -386,6 +386,9 @@ public struct SessionContext: Sendable {
     public var messages: [AgentMessage]
     public var thinkingLevel: String
     public var model: (provider: String, modelId: String)?
+    /// Entry id for each message in `messages` (aligned by index). Lets GUI
+    /// hosts offer per-message branching without re-deriving the mapping.
+    public var messageEntryIds: [String] = []
 }
 
 public struct SessionInfo: Sendable {
@@ -526,17 +529,21 @@ public func buildSessionContext(_ entries: [SessionEntry], _ leafId: String? = n
     }
 
     var messages: [AgentMessage] = []
+    var messageEntryIds: [String] = []
 
     func appendMessage(from entry: SessionEntry) {
         switch entry {
         case .message(let message):
             messages.append(message.message)
+            messageEntryIds.append(entry.id)
         case .customMessage(let custom):
             let hookMessage = HookMessage(customType: custom.customType, content: custom.content, display: custom.display, details: custom.details, timestamp: parseTimestamp(custom.timestamp))
             messages.append(makeHookAgentMessage(hookMessage))
+            messageEntryIds.append(entry.id)
         case .branchSummary(let summary):
             let msg = BranchSummaryMessage(summary: summary.summary, fromId: summary.fromId, timestamp: parseTimestamp(summary.timestamp))
             messages.append(makeBranchSummaryAgentMessage(msg))
+            messageEntryIds.append(entry.id)
         default:
             break
         }
@@ -568,7 +575,12 @@ public func buildSessionContext(_ entries: [SessionEntry], _ leafId: String? = n
         }
     }
 
-    return SessionContext(messages: messages, thinkingLevel: thinkingLevel, model: model)
+    return SessionContext(
+        messages: messages,
+        thinkingLevel: thinkingLevel,
+        model: model,
+        messageEntryIds: messageEntryIds
+    )
 }
 
 public func loadEntriesFromFile(_ filePath: String) -> [FileEntry] {
@@ -1195,6 +1207,25 @@ public final class SessionManager: Sendable {
 
     public func resetLeaf() {
         leafId = nil
+    }
+
+    /// Deletes the underlying session file and clears in-memory state, so the
+    /// session disappears from every `list()` and `open()` on its old path
+    /// reports nothing. Added for GUI hosts (omp-gui's sidebar delete) that
+    /// need a real delete instead of dropping a row from memory while the
+    /// file resurfaces on the next launch.
+    public func deleteSession() {
+        state.withLock { st in
+            if let file = st.sessionFile, FileManager.default.fileExists(atPath: file) {
+                try? FileManager.default.removeItem(atPath: file)
+            }
+            st.entries.removeAll()
+            st.byId.removeAll()
+            st.labelsById.removeAll()
+            st.header = nil
+            st.leafId = nil
+            st.sessionFile = nil
+        }
     }
 
     public func branchWithSummary(_ branchFromId: String?, _ summary: String, details: AnyCodable? = nil, fromHook: Bool? = nil, usage: Usage? = nil) throws -> String {
