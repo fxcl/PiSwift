@@ -234,6 +234,12 @@ private func loadTemplateFile(named name: String, ext: String, subdir: String) t
     if let url = Bundle.module.url(forResource: name, withExtension: ext, subdirectory: subdir) {
         return try String(contentsOf: url, encoding: .utf8)
     }
+    // SPM's `.process` flattens resource subdirectories into the bundle root,
+    // so the `subdirectory:` lookup above misses even though every file is in
+    // the bundle. Try the root before falling back to a filesystem path.
+    if let url = Bundle.module.url(forResource: name, withExtension: ext) {
+        return try String(contentsOf: url, encoding: .utf8)
+    }
 
     let baseDir = getExportTemplateDir()
     var relative = subdir

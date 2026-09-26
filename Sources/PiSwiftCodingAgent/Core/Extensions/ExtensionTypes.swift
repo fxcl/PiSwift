@@ -44,6 +44,18 @@ public enum ExtensionLoadError: Sendable, LocalizedError {
     /// IO error reading extension
     case ioError(path: String, error: Error)
 
+    /// The path every case carries, for UI annotations keyed by file.
+    public var pathHint: String {
+        switch self {
+        case .fileNotFound(let path): return path
+        case .invalidExtension(let path, _): return path
+        case .compilationError(let path, _): return path
+        case .packageLoadError(let path, _): return path
+        case .loadError(let path, _): return path
+        case .ioError(let path, _): return path
+        }
+    }
+
     public var errorDescription: String? {
         switch self {
         case .fileNotFound(let path):
