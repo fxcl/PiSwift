@@ -1411,6 +1411,12 @@ public final class AgentSession: Sendable {
         toolRegistry.values.map { ToolInfo(name: $0.name, description: $0.description) }
     }
 
+    /// Live slash commands (extension commands, prompt templates, skills) for
+    /// embedding GUIs — the in-process counterpart of the CLI's `get_commands`.
+    public func getCommands() -> [HookSlashCommandInfo] {
+        getHookCommands()
+    }
+
     private func getHookCommands() -> [HookSlashCommandInfo] {
         let extensionCommands = (_hookRunner?.getRegisteredCommands() ?? []).map { command in
             HookSlashCommandInfo(
